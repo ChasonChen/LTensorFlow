@@ -32,18 +32,17 @@ MAX_WORDS_COUNT = 4
 
 
 def add_vec2feature(data, word_vec):
-    feature = np.empty([data.shape[0], 4 * 49])
+    feature = []
     for index, row in data.iterrows():
         word_row = []
         try:
             words = str(row['tag']).split(' ')
             for j in range(MAX_WORDS_COUNT):
                 if j < words.__len__():
-                    word_row.append(word_vec[words[j]])
+                    word_row += word_vec[words[j]]
         except KeyError:
             print ('Match error')
-        feature[index, :word_row.__len__()] = word_row
-
+        feature.append(word_row)
     return feature
 
 
