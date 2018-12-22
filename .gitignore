@@ -1,2 +1,8 @@
-/data/glove.6B
+/demo/data/glove.6B
 .idea/
+/learn/MNIST_data
+/learn/tensorflowlearn/MNIST_DATA/
+/learn/tensorflowlearn/accuracy/
+/learn/tensorflowlearn/logs/
+.DS_Store
+/learn/logs/
