@@ -33,18 +33,30 @@ biases = {
 def RNN(X, weight, biases):
     # hidden layer for input to cell
     ##########################################
+    # X(128batch , 28 steps, 28 inputs
+    # ===>(128 * 28,28 inputs)
+    X = tf.reshape(X, [-1, n_inputs])
+    X_in = tf.matmul(X, weight['in']) + biases['in']
+    X_in = tf.reshape(X_in, [-1, n_steps, n_hidden_unis])
 
     # cell
     ##########################################
+    lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(n_hidden_unis, forget_bias=1.0, state_is_tuple=True)
+    _init_states = lstm_cell.zero_state(batch_size, dtype=tf.float32)
+
+    outputs, status = tf.nn.dynamic_rnn(lstm_cell, X_in, initial_state=_init_states, time_major=False)
 
     # hidden layer for output as the final results
     ##########################################
-    result = None
+
+    outputs = tf.unstack(tf.transpose(outputs, [1, 0, 2]))
+    result = tf.matmul(outputs[-1], weight['out']) + biases['out']
+
     return result
 
 
 pred = RNN(x, weight, biases)
-cost = tf.reduce(tf.nn.softmax_cross_entropy_with_logits(pred, y))
+cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=pred, labels=y))
 train_op = tf.train.AdamOptimizer(lr).minimize(cost)
 
 correct_pred = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
