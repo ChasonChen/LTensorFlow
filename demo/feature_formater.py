@@ -31,26 +31,36 @@ def get_feature():
 MAX_WORDS_COUNT = 4
 
 
-def add_vec2feature(data, word_vec):
+def get_train_data():
+    data = get_feature()
+    word_vec = get_word_vec()
+
     feature = []
     tag = []
     for index, row in data.iterrows():
-        word_row = []
+        word_row = np.zeros([MAX_WORDS_COUNT, 49], dtype=np.float32)
         try:
             words = str(row['tag']).split(' ')
             for j in range(MAX_WORDS_COUNT):
                 if j < words.__len__():
-                    word_row.append(word_vec[words[j]])
+                    word_row[j] = np.array(word_vec[words[j]], dtype=np.float32).reshape(1, 49)
                 else:
-                    word_row.append(np.zeros([1, 50]))
+                    word_row[j] = np.zeros([1, 49], dtype=np.float32)
+
         except KeyError:
-            print ('Match error')
-        if 0 == word_row.__len__():
-            word_row = np.zeros([MAX_WORDS_COUNT, 50])
+            err = KeyError
+
         feature.append(word_row)
-        y = [row['item']]
-        tag.append(y)
-    return tag, feature
+
+        tag_row = np.zeros(2, dtype=np.float32)
+        y = [row['item']][0]
+        if y is 0:
+            tag_row[0] = 1
+        else:
+            tag_row[1] = 1
+
+        tag.append(tag_row)
+    return np.array(feature, dtype=np.float32), np.array(tag, dtype=np.float32)
 
 
 def get_word_vec():

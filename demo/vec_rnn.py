@@ -1,26 +1,23 @@
 import tensorflow as tf
 import numpy as np
 
-from feature_formater import get_feature, get_word_vec, add_vec2feature
+from feature_formater import get_train_data
 
-df = get_feature()
-word_vec = get_word_vec()
-
-# # this is data
+# this is data
 lr = 0.001
-training_iters = 100000
-batch_size = 9999
+# training_iters = 100000
+batch_size = 100
 
-n_inputs = 50  # MNIST data input (img shape: 28*28)
+n_inputs = 49  # MNIST data input (img shape: 28*28)
 n_steps = 4  # time steps
 n_hidden_unis = 128  # neurons in hidden layer
-n_classes = 1  # MNIST classes (0-9 digits)
+n_classes = 2  # MNIST classes (0-9 digits)
 
-# # tf Graph input
+# tf Graph input
 x = tf.placeholder(tf.float32, [None, n_steps, n_inputs])
 y = tf.placeholder(tf.float32, [None, n_classes])
 
-# # Define weight
+# Define weight
 weight = {
     'in': tf.Variable(tf.random_normal([n_inputs, n_hidden_unis])),
     'out': tf.Variable(tf.random_normal([n_hidden_unis, n_classes]))
@@ -43,7 +40,7 @@ def RNN(X, weight, biases):
 
     # cell
     ##########################################
-    lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(n_hidden_unis, forget_bias=1.0, state_is_tuple=True)
+    lstm_cell = tf.nn.rnn_cell.LSTMCell(n_hidden_unis, forget_bias=1.0, state_is_tuple=True)
     _init_states = lstm_cell.zero_state(batch_size, dtype=tf.float32)
 
     outputs, status = tf.nn.dynamic_rnn(lstm_cell, X_in, initial_state=_init_states, time_major=False)
@@ -59,7 +56,7 @@ def RNN(X, weight, biases):
 
 pred = RNN(x, weight, biases)
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=pred, labels=y))
-train_op = tf.train.AdamOptimizer(lr).minimize(cost)
+train_op = tf.train.GradientDescentOptimizer(lr).minimize(cost)
 
 correct_pred = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
@@ -68,17 +65,26 @@ init = tf.global_variables_initializer()
 
 with tf.Session() as sess:
     sess.run(init)
+    batch_xs, batch_ys = get_train_data()
+
     step = 0
-    while step * batch_size < training_iters:
-        batch_ys, batch_xs = add_vec2feature(df, word_vec)
-        # batch_xs = batch_xs.reshape([batch_size, n_steps, n_inputs])
+    index_from = batch_size * step
+    index_to = batch_size * (step + 1)
+
+    while index_to < batch_ys.__len__():
+        xs = batch_xs[index_from:index_to]
+        ys = batch_ys[index_from:index_to]
+
         sess.run([train_op], feed_dict={
-            x: batch_xs,
-            y: np.array(batch_ys)
+            x: xs,
+            y: ys
         })
-        if step % 20 == 0:
-            print (sess.run(accuracy, feed_dict={
-                x: batch_xs,
-                y: batch_ys
+        if step % 10 == 0:
+            print (sess.run([cost, accuracy], feed_dict={
+                x: xs,
+                y: ys
             }))
         step += 1
+        index_from = batch_size * step
+        index_to = batch_size * (step + 1)
+

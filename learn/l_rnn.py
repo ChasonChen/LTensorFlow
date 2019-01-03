@@ -67,6 +67,10 @@ init = tf.global_variables_initializer()
 with tf.Session() as sess:
     sess.run(init)
     step = 0
+
+    batch_xs, batch_ys = mnist.train.next_batch(batch_size)
+    batch_xs = batch_xs.reshape([batch_size, n_steps, n_inputs])
+
     while step * batch_size < training_iters:
         batch_xs, batch_ys = mnist.train.next_batch(batch_size)
         batch_xs = batch_xs.reshape([batch_size, n_steps, n_inputs])
@@ -75,8 +79,9 @@ with tf.Session() as sess:
             y: batch_ys
         })
         if step % 20 == 0:
-            print (sess.run(accuracy, feed_dict={
+            result = sess.run(cost, feed_dict={
                 x: batch_xs,
                 y: batch_ys
-            }))
+            })
+            print (result)
         step += 1
